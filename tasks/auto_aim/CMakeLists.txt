@@ -9,7 +9,7 @@ find_package(OpenVINO REQUIRED COMPONENTS Runtime)
 add_library(auto_aim OBJECT 
     armor.cpp
     classifier.cpp 
-    # detector.cpp
+    detector.cpp
     # solver.cpp
     # aimer.cpp
     # target.cpp
