@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
         tools::logger()->info("{:.2f} fps", 1 / dt);
 
         cv::resize(draw_img, draw_img, {}, 0.5, 0.5); // 显示时缩小图片尺寸
-        cv::putText(draw_img, fmt::format("{}",use_tradition?"传统":"YOLO"), {10, 30}, cv::FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
+        cv::putText(draw_img, fmt::format("{}",use_tradition?"CV":"YOLO"), {10, 30}, cv::FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
         cv::imshow("reprojection", draw_img);
 
         auto key = cv::waitKey(30);
