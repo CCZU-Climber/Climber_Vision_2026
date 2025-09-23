@@ -6,8 +6,8 @@
 #include <opencv2/opencv.hpp>
 
 // #include "tasks/auto_aim/aimer.hpp"
-// #include "tasks/auto_aim/solver.hpp"
-// #include "tasks/auto_aim/tracker.hpp"
+#include "tasks/auto_aim/solver.hpp"
+#include "tasks/auto_aim/tracker.hpp"
 #include "tasks/auto_aim/yolo.hpp"
 #include "tasks/auto_aim/detector.hpp"
 #include "tools/exiter.hpp"
@@ -39,9 +39,12 @@ int main(int argc, char *argv[])
 
     auto_aim::YOLO yolo(config_path,false);
     auto_aim::Detector detector(config_path,false);
+    auto_aim::Solver solver(config_path);
+    auto_aim::Tracker tracker(config_path,solver);
 
     cv::Mat img, drawing;
     std::list<auto_aim::Armor> armors;
+    std::list<auto_aim::Target> targets;
     std::chrono::steady_clock::time_point t;
     io::Camera camera(config_path);
     double last_t = -1;
@@ -54,30 +57,44 @@ int main(int argc, char *argv[])
 
         auto last = std::chrono::steady_clock::now();
 
-        // if (use_tradition)
-        //     armors = detector.detect(img);
-        // else
-        //     armors = yolo.detect(img);
-        armors = detector.detect(img);
+        // armors = detector.detect(img);
+        armors = yolo.detect(img);
         cv::Mat draw_img = img.clone();
         for(const auto & armor : armors){
-            std::vector<cv::Point> point(4);
+            std::vector<cv::Point> armor_point(4);
             for(int i=0;i<4;i++){
-                point[i] = cv::Point(static_cast<int>(armor.points[i].x),static_cast<int>(armor.points[i].y));
+                armor_point[i] = cv::Point(static_cast<int>(armor.points[i].x), static_cast<int>(armor.points[i].y));
             }
-            cv::polylines(draw_img, std::vector<std::vector<cv::Point>>{point}, true, cv::Scalar(0,255,0),2);
-        
+            cv::polylines(draw_img, std::vector<std::vector<cv::Point>>{armor_point}, true, cv::Scalar(0, 255, 0), 2);
+
             tools::draw_text(draw_img, fmt::format("ID:{} conf{:.2f}",armor.name,armor.confidence), armor.center);
         }
 
-        auto now = std::chrono::steady_clock::now();
+        targets = tracker.track(armors, t);
 
-        auto dt = tools::delta_time(now, last);
-        tools::logger()->info("{:.2f} fps", 1 / dt);
+        if (!targets.empty())
+        {
+            auto target = targets.front();
+            tools::draw_text(draw_img, fmt::format("[{}]", tracker.state()), {10, 30}, {255, 255, 255});
 
-        cv::resize(draw_img, draw_img, {}, 0.5, 0.5); // 显示时缩小图片尺寸
-        cv::putText(draw_img, fmt::format("{}",use_tradition?"CV":"YOLO"), {10, 30}, cv::FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
-        cv::imshow("reprojection", draw_img);
+            // 当前帧target更新后
+            std::vector<Eigen::Vector4d> armor_xyza_list = target.armor_xyza_list();
+            for (const Eigen::Vector4d &xyza : armor_xyza_list)
+            {
+                auto image_points =
+                    solver.reproject_armor(xyza.head(3), xyza[3], target.armor_type, target.name);
+                tools::draw_points(draw_img, image_points, {0, 255, 255});
+            }
+
+            auto now = std::chrono::steady_clock::now();
+
+            auto dt = tools::delta_time(now, last);
+            tools::logger()->info("{:.2f} fps", 1 / dt);
+        }
+
+            cv::resize(draw_img, draw_img, {}, 0.5, 0.5); // 显示时缩小图片尺寸
+            cv::putText(draw_img, fmt::format("{}", use_tradition ? "CV" : "YOLO"), {10, 30}, cv::FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
+            cv::imshow("reprojection", draw_img);
 
         auto key = cv::waitKey(30);
         if (key == 'q')

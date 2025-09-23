@@ -10,10 +10,10 @@ add_library(auto_aim OBJECT
     armor.cpp
     classifier.cpp 
     detector.cpp
-    # solver.cpp
+    solver.cpp
     # aimer.cpp
-    # target.cpp
-    # tracker.cpp
+    target.cpp
+    tracker.cpp
     # voter.cpp
     # shooter.cpp
     yolo.cpp
