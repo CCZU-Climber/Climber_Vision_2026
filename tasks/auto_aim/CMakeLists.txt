@@ -11,11 +11,11 @@ add_library(auto_aim OBJECT
     classifier.cpp 
     detector.cpp
     solver.cpp
-    # aimer.cpp
+    aimer.cpp
     target.cpp
     tracker.cpp
     # voter.cpp
-    # shooter.cpp
+    shooter.cpp
     yolo.cpp
     yolos/yolov5.cpp
     yolos/yolov8.cpp

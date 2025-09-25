@@ -6,6 +6,7 @@
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/io/serial/include",
                 "${workspaceFolder}/io/hikrobot/include",
+                "${workspaceFolder}/io/**",
                 "${workspaceFolder}/tasks/auto_aim/**",
                 "/usr/include/opencv4",
                 "/usr/include/eigen3",
