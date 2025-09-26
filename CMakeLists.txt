@@ -34,7 +34,9 @@ add_subdirectory(tasks/auto_aim)
 
 ##################tests##################
 add_executable(auto_aim_test test/auto_aim_test.cpp)
+add_executable(mini_system test/mini_system.cpp)
 target_link_libraries(auto_aim_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+target_link_libraries(mini_system ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
 # # 检查 ROS 环境
 # find_package(ament_cmake QUIET)
 # find_package(rclcpp QUIET)

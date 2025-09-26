@@ -8,6 +8,7 @@
                 "${workspaceFolder}/io/hikrobot/include",
                 "${workspaceFolder}/io/**",
                 "${workspaceFolder}/tasks/auto_aim/**",
+                "${workspaceFolder}/tools/**",
                 "/usr/include/opencv4",
                 "/usr/include/eigen3",
                 "/opt/intel/openvino_2024.6.0/runtime/include/",

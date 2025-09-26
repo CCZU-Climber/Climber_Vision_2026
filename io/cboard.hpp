@@ -9,6 +9,7 @@
 #include <vector>
 #include <thread>
 #include <atomic>
+#include <iostream>
 
 #include "io/command.hpp"
 #include "serial/serial.h"
@@ -27,14 +28,14 @@ enum Mode
 };
 const std::vector<std::string> MODES = {"idle", "auto_aim", "small_buff", "big_buff", "outpost"};
 
-// 哨兵专有
-enum ShootMode
-{
-  left_shoot,
-  right_shoot,
-  both_shoot
-};
-const std::vector<std::string> SHOOT_MODES = {"left_shoot", "right_shoot", "both_shoot"};
+// // 哨兵专有
+// enum ShootMode
+// {
+//   left_shoot,
+//   right_shoot,
+//   both_shoot
+// };
+// const std::vector<std::string> SHOOT_MODES = {"left_shoot", "right_shoot", "both_shoot"};
 
 // --- New Serial Packet Definitions ---
 
@@ -43,9 +44,9 @@ struct __attribute__((packed)) BoardToVision
 {
   uint8_t head[2] = {'B', 'V'}; // 帧头
   uint8_t mode;                 // 对应原 frame.data[2]
-  uint8_t shoot_mode;           // 对应原 frame.data[3]
+  // uint8_t shoot_mode;           // 对应原 frame.data[3]
   float bullet_speed;           // 对应原 frame.data[0] | frame.data[1] / 1e2
-  float ft_angle;               // 对应原 frame.data[4] | frame.data[5] / 1e4
+  // float ft_angle;               // 对应原 frame.data[4] | frame.data[5] / 1e4
   float q[4];                   // wxyz顺序，对应原四元数数据
   uint16_t crc16;
 };
@@ -57,7 +58,7 @@ struct __attribute__((packed)) VisionToBoard
 {
   uint8_t head[2] = {'V', 'B'}; // 帧头
   uint8_t control_and_shoot;    // Bit 0: control, Bit 1: shoot
-  float yaw;
+  float yaw;          // 单位弧度
   float pitch;
   float horizon_distance;
   uint16_t crc16;
@@ -70,17 +71,16 @@ class CBoard
 public:
   double bullet_speed;
   Mode mode;
-  ShootMode shoot_mode;
-  double ft_angle;  //无人机专有
+  // ShootMode shoot_mode;
+  // double ft_angle;  //无人机专有
 
   CBoard(const std::string & config_path);
+  ~CBoard();
 
   Eigen::Quaterniond imu_at(std::chrono::steady_clock::time_point timestamp);
 
   void send(Command command);
-  void read_serial();
-  bool read(uint8_t *buffer, size_t size);
-  void reconnect();
+
 
 private:
   struct IMUData
@@ -89,8 +89,7 @@ private:
     std::chrono::steady_clock::time_point timestamp;
   };
 
-  tools::ThreadSafeQueue<IMUData> queue_{5000};  // 必须在can_之前初始化，否则存在死锁的可能
-  // SocketCAN can_;
+  tools::ThreadSafeQueue<IMUData> queue_{5000}; 
   serial::Serial serial_;
 
   std::thread thread_;
@@ -99,6 +98,12 @@ private:
   IMUData data_ahead_;
   IMUData data_behind_;
 
+  BoardToVision rx_data_;
+  VisionToBoard tx_data_;
+
+  void read_thread();
+  bool read(uint8_t *buffer, size_t size);
+  void reconnect();
 };
 
 }  // namespace io

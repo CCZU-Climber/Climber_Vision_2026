@@ -9,13 +9,13 @@ namespace io
 {
   CBoard::CBoard(const std::string & config_path)
   : mode(Mode::idle),
-    shoot_mode(ShootMode::left_shoot),
+    // shoot_mode(ShootMode::left_shoot),
     bullet_speed(0)
   {
     auto yaml = tools::load(config_path);
-    std::string com_port = tools::read<std::string>(yaml, "com_port");
+    auto com_port = tools::read<std::string>(yaml, "com_port");
     try{
-      serial_.open(com_port);
+      serial_.setPort(com_port);
       serial_.setBaudrate(115200);
       serial_.setFlowcontrol(serial::flowcontrol_none);
       serial_.setParity(serial::parity_none);
@@ -23,6 +23,7 @@ namespace io
       serial_.setBytesize(serial::eightbits);
       serial::Timeout time_out=serial::Timeout::simpleTimeout(20);
       serial_.setTimeout(time_out);
+      serial_.open();
       usleep(1000000); // 1s wait
     }
     catch (const std::exception &e)
@@ -31,6 +32,13 @@ namespace io
       exit(1);
     }
     
+    // 启动线程
+    thread_ = std::thread(&CBoard::read_thread, this);
+
+    tools::logger()->info("[Cboard] Waiting for q...");
+    queue_.pop(data_ahead_);
+    queue_.pop(data_behind_);
+    tools::logger()->info("[Cboard] Opened.");
   }
 
   CBoard::~CBoard()
@@ -71,7 +79,7 @@ namespace io
 
     return q_c;
   }
-  
+
   void CBoard::send(Command command)
   {
     VisionToBoard tx_data;
@@ -102,6 +110,8 @@ namespace io
     {
       // 通过串口发送
       serial_.write(reinterpret_cast<uint8_t *>(&tx_data), sizeof(tx_data));
+      tools::logger()->debug("[Cboard] Sent command: control={}, shoot={}, yaw={:.2f}, pitch={:.2f}, horizon_distance={:.2f}",
+                            command.control, command.shoot, command.yaw, command.pitch, command.horizon_distance);
     }
     catch (const std::exception &e)
     {
@@ -195,6 +205,7 @@ namespace io
         continue;
       }
 
+      tools::logger()->debug("[Cboard] Received data: mode={}", rx_data_.mode);
       error_count = 0;
 
       // --- 数据解析 (对应原 CAN callback 逻辑) ---
@@ -218,8 +229,8 @@ namespace io
       // 更新状态变量 (对应原 bullet_speed_canid_ 接收逻辑)
       bullet_speed = rx_data_.bullet_speed;
       mode = Mode(rx_data_.mode);
-      shoot_mode = ShootMode(rx_data_.shoot_mode);
-      ft_angle = rx_data_.ft_angle;
+      // shoot_mode = ShootMode(rx_data_.shoot_mode);
+      // ft_angle = rx_data_.ft_angle;
 
       // 限制日志输出频率为1Hz (保持不变)
       static auto last_log_time = std::chrono::steady_clock::time_point::min();
@@ -227,11 +238,16 @@ namespace io
 
       if (bullet_speed > 0 && tools::delta_time(now, last_log_time) >= 1.0)
       {
+        // tools::logger()->info(
+        //     "[CBoard] Bullet speed: {:.2f} m/s, Mode: {}, Shoot mode: {}, FT angle: {:.2f} rad",
+        //     bullet_speed, MODES[mode], SHOOT_MODES[shoot_mode], ft_angle);
+        // last_log_time = now;
         tools::logger()->info(
             "[CBoard] Bullet speed: {:.2f} m/s, Mode: {}, Shoot mode: {}, FT angle: {:.2f} rad",
-            bullet_speed, MODES[mode], SHOOT_MODES[shoot_mode], ft_angle);
+            bullet_speed, MODES[mode]);
         last_log_time = now;
       }
+      
     }
 
     tools::logger()->info("[Cboard] read_thread stopped.");
