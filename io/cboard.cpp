@@ -87,14 +87,15 @@ namespace io
     tx_data.head[1] = 'B';
 
     // 封装控制和开火位
-    tx_data.control_and_shoot = 0;
+    tx_data.shoot = 0;
+    tx_data.control = 0;
     if (command.control)
     {
-      tx_data.control_and_shoot |= (1 << 0);
+      tx_data.control = 1;
     }
     if (command.shoot)
     {
-      tx_data.control_and_shoot |= (1 << 1);
+      tx_data.shoot = 1;
     }
 
     // 转换 double 到 float 并赋值
@@ -103,9 +104,10 @@ namespace io
     tx_data.horizon_distance = (float)command.horizon_distance;
 
     // 计算 CRC16
-    tx_data.crc16 = tools::get_crc16(
-        reinterpret_cast<uint8_t *>(&tx_data), sizeof(tx_data) - sizeof(tx_data.crc16));
-
+    // tx_data.crc16 = tools::get_crc16(
+    //     reinterpret_cast<uint8_t *>(&tx_data), sizeof(tx_data) - sizeof(tx_data.crc16));
+    tx_data.tail[0] = 'E';
+    tx_data.tail[1] = 'N';
     try
     {
       // 通过串口发送
@@ -198,10 +200,15 @@ namespace io
         continue;
       }
 
-      // 4. 检查 CRC16
-      if (!tools::check_crc16(reinterpret_cast<uint8_t *>(&rx_data_), sizeof(rx_data_)))
+      // // 4. 检查 CRC16
+      // if (!tools::check_crc16(reinterpret_cast<uint8_t *>(&rx_data_), sizeof(rx_data_)))
+      // {
+      //   tools::logger()->debug("[Cboard] CRC16 check failed.");
+      //   continue;
+      // }
+      if(rx_data_.tail[0]!='E' || rx_data_.tail[1]!='N')
       {
-        tools::logger()->debug("[Cboard] CRC16 check failed.");
+        tools::logger()->debug("[Cboard] Tail check failed.");
         continue;
       }
 
