@@ -10,16 +10,14 @@
 #include "tools/exiter.hpp"
 #include "tools/logger.hpp"
 
-
 const std::string keys =
     "{help h usage ? |      | 输出命令行参数说明}"
-    "{@config-path   | configs/test.yaml | 位置参数,yaml配置文件路径 }";
+    "{config-path c  | configs/test.yaml | yaml配置文件的路径}";
 
-
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     cv::CommandLineParser parser(argc, argv, keys);
-    auto config_path = parser.get<std::string>("@config-path");
+    auto config_path = parser.get<std::string>("config-path");
 
     tools::Exiter exiter;
 
@@ -29,14 +27,19 @@ int main(int argc, char * argv[])
 
     std::chrono::steady_clock::time_point timestamp;
 
-    while(!exiter.exit()){
+    while (!exiter.exit())
+    {
         camera.read(img, timestamp);
-        if(img.empty()){
+        // camera_l.read(img_l, timestamp_l);
+        if (img.empty())
+        {
             break;
         }
         cv::resize(img, img, {}, 0.5, 0.5);
+
         cv::imshow("camera", img);
 
-        if(cv::waitKey(1)=='q') break;
+        if (cv::waitKey(1) == 'q')
+            break;
     }
 }

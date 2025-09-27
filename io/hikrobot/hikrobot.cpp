@@ -13,6 +13,7 @@ namespace io
   {
     // set_vid_pid(vid_pid);
     // if (libusb_init(NULL)) tools::logger()->warn("Unable to init libusb!");
+    tools::logger()->info("HikRobot instance created with User ID: {}", user_id_);
 
     daemon_thread_ = std::thread{[this]
                                  {
@@ -118,6 +119,8 @@ void HikRobot::capture_start()
   ret = MV_CC_OpenDevice(handle_);
   if (ret != MV_OK) {
     tools::logger()->warn("MV_CC_OpenDevice failed: {:#x}", ret);
+    MV_CC_DestroyHandle(handle_);
+    handle_ = nullptr; // 将句柄置空，避免后续操作使用无效句柄
     return;
   }
 
@@ -218,6 +221,12 @@ void HikRobot::capture_stop()
     tools::logger()->warn("MV_CC_DestroyHandle failed: {:#x}", ret);
     return;
   }
+  if (ret != MV_OK)
+  {
+    tools::logger()->warn("MV_CC_DestroyHandle failed: {:#x}", ret);
+    return;
+  }
+  handle_ = nullptr; // 成功销毁后置空
 }
 
 void HikRobot::set_float_value(const std::string & name, double value)

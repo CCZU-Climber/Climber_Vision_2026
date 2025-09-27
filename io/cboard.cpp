@@ -205,7 +205,7 @@ namespace io
         continue;
       }
 
-      tools::logger()->debug("[Cboard] Received data: mode={}", rx_data_.mode);
+      // tools::logger()->debug("[Cboard] Received data: mode={}", rx_data_.mode);
       error_count = 0;
 
       // --- 数据解析 (对应原 CAN callback 逻辑) ---
