@@ -43,21 +43,20 @@ const std::vector<std::string> MODES = {"idle", "auto_aim", "small_buff", "big_b
 struct __attribute__((packed)) BoardToVision
 {
   uint8_t head[2] = {'B', 'V'}; // 帧头
-  uint8_t mode;                 // 对应原 frame.data[2]
-  float bullet_speed;           // 对应原 frame.data[0] | frame.data[1] / 1e2
-  float q[4];                   // wxyz顺序，对应原四元数数据
+  uint8_t mode;                 // 射击模式：0手动，1自瞄，2开符
+  float bullet_speed;           //  1e2
+  float q[4];                   // wxyz顺序，四元数
   // uint16_t crc16;
   uint8_t tail[2] = {'E', 'N'}; // 帧尾
 };
 static_assert(sizeof(BoardToVision) <= 64);
 
 // 发送：Vision -> 下位机 (Command)
-// 包含原CAN通信中 send_canid_ 的内容
 struct __attribute__((packed)) VisionToBoard
 {
   uint8_t head[2] = {'V', 'B'}; // 帧头
-  uint8_t control;
-  uint8_t shoot;      // Bit 0: control, Bit 1: shoot
+  uint8_t control;      //1：控制
+  uint8_t shoot;        //1：射击
   float yaw;          // 单位弧度
   float pitch;
   float horizon_distance;
