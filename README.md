@@ -8,3 +8,10 @@ make -C build/ -j`nproc`
 ```bash
 ./build/auto_aim_test configs/test.yaml
 ```
+
+## 3. 相机调用
+修改了相机调用逻辑，通过相机名访问设备
+需在yaml文件里改变
+```yaml
+user_id: R
+```
