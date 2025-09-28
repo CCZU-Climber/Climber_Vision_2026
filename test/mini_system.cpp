@@ -10,6 +10,7 @@
 #include "tasks/auto_aim/tracker.hpp"
 #include "tasks/auto_aim/yolo.hpp"
 #include "tasks/auto_aim/detector.hpp"
+#include "tasks/auto_aim/shooter.hpp"
 #include "tools/exiter.hpp"
 #include "tools/img_tools.hpp"
 #include "tools/logger.hpp"
@@ -37,19 +38,23 @@ int main(int argc, char *argv[])
     // tools::Plotter plotter;
     tools::Exiter exiter;
 
-    auto_aim::YOLO yolo(config_path,false);
-    auto_aim::Detector detector(config_path,false);
+    auto_aim::YOLO yolo(config_path, false);
+    auto_aim::Detector detector(config_path, false);
     auto_aim::Solver solver(config_path);
-    auto_aim::Tracker tracker(config_path,solver);
+    auto_aim::Tracker tracker(config_path, solver);
+    auto_aim::Aimer aimer(config_path);
+    auto_aim::Shooter shooter(config_path);
 
     cv::Mat img, drawing;
     std::list<auto_aim::Armor> armors;
     std::list<auto_aim::Target> targets;
     std::chrono::steady_clock::time_point t;
+
+    io::CBoard cboard(config_path);
     io::Camera camera(config_path);
     double last_t = -1;
 
-    while(!exiter.exit())
+    while (!exiter.exit())
     {
         camera.read(img, t);
         if (img.empty())
@@ -60,14 +65,16 @@ int main(int argc, char *argv[])
         // armors = detector.detect(img);
         armors = yolo.detect(img);
         cv::Mat draw_img = img.clone();
-        for(const auto & armor : armors){
+        for (const auto &armor : armors)
+        {
             std::vector<cv::Point> armor_point(4);
-            for(int i=0;i<4;i++){
+            for (int i = 0; i < 4; i++)
+            {
                 armor_point[i] = cv::Point(static_cast<int>(armor.points[i].x), static_cast<int>(armor.points[i].y));
             }
             cv::polylines(draw_img, std::vector<std::vector<cv::Point>>{armor_point}, true, cv::Scalar(0, 255, 0), 2);
 
-            tools::draw_text(draw_img, fmt::format("ID:{} conf{:.2f}",armor.name,armor.confidence), armor.center);
+            tools::draw_text(draw_img, fmt::format("ID:{} conf{:.2f}", armor.name, armor.confidence), armor.center);
         }
 
         targets = tracker.track(armors, t);
@@ -92,13 +99,17 @@ int main(int argc, char *argv[])
             tools::logger()->info("{:.2f} fps", 1 / dt);
         }
 
-            cv::resize(draw_img, draw_img, {}, 0.5, 0.5); // 显示时缩小图片尺寸
-            cv::putText(draw_img, fmt::format("{}", use_tradition ? "CV" : "YOLO"), {10, 30}, cv::FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
-            cv::imshow("reprojection", draw_img);
+        cv::resize(draw_img, draw_img, {}, 0.5, 0.5); // 显示时缩小图片尺寸
+        cv::putText(draw_img, fmt::format("{}", use_tradition ? "CV" : "YOLO"), {10, 30}, cv::FONT_HERSHEY_SIMPLEX, 1, {0, 255, 0}, 2);
+        cv::imshow("reprojection", draw_img);
 
         auto key = cv::waitKey(30);
         if (key == 'q')
             break;
+
+        auto command = aimer.aim(targets, t, cboard.bullet_speed);
+
+        cboard.send(command);
     }
 
     return 0;

@@ -7,10 +7,9 @@ add_subdirectory(serial)
 # 创建目标 io
 add_library(io STATIC 
     hikrobot/hikrobot.cpp    
-    # mindvision/mindvision.cpp  
     # usbcamera/usbcamera.cpp  
     camera.cpp
-    # cboard.cpp
+    cboard.cpp
     # dm_imu/dm_imu.cpp
     gimbal/gimbal.cpp
 )

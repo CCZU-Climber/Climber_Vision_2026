@@ -8,32 +8,36 @@ using namespace std::chrono_literals;
 
 namespace io
 {
-HikRobot::HikRobot(double exposure_ms, double gain, const std::string & vid_pid)
-: exposure_us_(exposure_ms * 1e3), gain_(gain), queue_(1), daemon_quit_(false), vid_(-1), pid_(-1)
-{
-  set_vid_pid(vid_pid);
-  if (libusb_init(NULL)) tools::logger()->warn("Unable to init libusb!");
+  HikRobot::HikRobot(double exposure_ms, double gain, const std::string &user_id)
+      : exposure_us_(exposure_ms * 1e3), gain_(gain), user_id_(user_id), queue_(1), daemon_quit_(false) //, vid_(-1), pid_(-1)
+  {
+    // set_vid_pid(vid_pid);
+    // if (libusb_init(NULL)) tools::logger()->warn("Unable to init libusb!");
+    tools::logger()->info("HikRobot instance created with User ID: {}", user_id_);
 
-  daemon_thread_ = std::thread{[this] {
-    tools::logger()->info("HikRobot's daemon thread started.");
+    daemon_thread_ = std::thread{[this]
+                                 {
+                                   tools::logger()->info("HikRobot's daemon thread started.");
 
-    capture_start();
+                                   capture_start();
 
-    while (!daemon_quit_) {
-      std::this_thread::sleep_for(100ms);
+                                   while (!daemon_quit_)
+                                   {
+                                     std::this_thread::sleep_for(100ms);
 
-      if (capturing_) continue;
+                                     if (capturing_)
+                                       continue;
 
-      capture_stop();
-      reset_usb();
-      capture_start();
-    }
+                                     capture_stop();
+                                     // reset_usb();
+                                     capture_start();
+                                   }
 
-    capture_stop();
+                                   capture_stop();
 
-    tools::logger()->info("HikRobot's daemon thread stopped.");
-  }};
-}
+                                   tools::logger()->info("HikRobot's daemon thread stopped.");
+                                 }};
+  }
 
 HikRobot::~HikRobot()
 {
@@ -70,8 +74,44 @@ void HikRobot::capture_start()
     return;
   }
 
-  ret = MV_CC_CreateHandle(&handle_, device_list.pDeviceInfo[0]);
-  if (ret != MV_OK) {
+  // **遍历设备列表，查找匹配 User ID 的设备**
+  MV_CC_DEVICE_INFO *target_info = nullptr;
+  for (unsigned int i = 0; i < device_list.nDeviceNum; ++i)
+  {
+    MV_CC_DEVICE_INFO *info = device_list.pDeviceInfo[i];
+
+    // 检查设备类型并访问对应的 User ID 字段
+    if (info->nTLayerType == MV_GIGE_DEVICE)
+    {
+      if (std::string(reinterpret_cast<const char *>(info->SpecialInfo.stGigEInfo.chUserDefinedName)) == user_id_)
+      {
+        target_info = info;
+        break;
+      }
+    }
+    else if (info->nTLayerType == MV_USB_DEVICE)
+    {
+      if (std::string(reinterpret_cast<const char *>(info->SpecialInfo.stUsb3VInfo.chUserDefinedName)) == user_id_)
+      {
+        target_info = info;
+        break;
+      }
+    }
+  }
+
+  if (target_info == nullptr)
+  {
+    tools::logger()->warn("Not found camera with User ID: {}", user_id_);
+    return;
+  }
+  // ret = MV_CC_CreateHandle(&handle_, device_list.pDeviceInfo[0]);
+  // if (ret != MV_OK) {
+  //   tools::logger()->warn("MV_CC_CreateHandle failed: {:#x}", ret);
+  //   return;
+  // }
+  ret = MV_CC_CreateHandle(&handle_, target_info);
+  if (ret != MV_OK)
+  {
     tools::logger()->warn("MV_CC_CreateHandle failed: {:#x}", ret);
     return;
   }
@@ -79,6 +119,8 @@ void HikRobot::capture_start()
   ret = MV_CC_OpenDevice(handle_);
   if (ret != MV_OK) {
     tools::logger()->warn("MV_CC_OpenDevice failed: {:#x}", ret);
+    MV_CC_DestroyHandle(handle_);
+    handle_ = nullptr; // 将句柄置空，避免后续操作使用无效句柄
     return;
   }
 
@@ -179,6 +221,12 @@ void HikRobot::capture_stop()
     tools::logger()->warn("MV_CC_DestroyHandle failed: {:#x}", ret);
     return;
   }
+  if (ret != MV_OK)
+  {
+    tools::logger()->warn("MV_CC_DestroyHandle failed: {:#x}", ret);
+    return;
+  }
+  handle_ = nullptr; // 成功销毁后置空
 }
 
 void HikRobot::set_float_value(const std::string & name, double value)
@@ -205,42 +253,42 @@ void HikRobot::set_enum_value(const std::string & name, unsigned int value)
   }
 }
 
-void HikRobot::set_vid_pid(const std::string & vid_pid)
-{
-  auto index = vid_pid.find(':');
-  if (index == std::string::npos) {
-    tools::logger()->warn("Invalid vid_pid: \"{}\"", vid_pid);
-    return;
-  }
+// void HikRobot::set_vid_pid(const std::string & vid_pid)
+// {
+//   auto index = vid_pid.find(':');
+//   if (index == std::string::npos) {
+//     tools::logger()->warn("Invalid vid_pid: \"{}\"", vid_pid);
+//     return;
+//   }
 
-  auto vid_str = vid_pid.substr(0, index);
-  auto pid_str = vid_pid.substr(index + 1);
+//   auto vid_str = vid_pid.substr(0, index);
+//   auto pid_str = vid_pid.substr(index + 1);
 
-  try {
-    vid_ = std::stoi(vid_str, 0, 16);
-    pid_ = std::stoi(pid_str, 0, 16);
-  } catch (const std::exception &) {
-    tools::logger()->warn("Invalid vid_pid: \"{}\"", vid_pid);
-  }
-}
+//   try {
+//     vid_ = std::stoi(vid_str, 0, 16);
+//     pid_ = std::stoi(pid_str, 0, 16);
+//   } catch (const std::exception &) {
+//     tools::logger()->warn("Invalid vid_pid: \"{}\"", vid_pid);
+//   }
+// }
 
-void HikRobot::reset_usb() const
-{
-  if (vid_ == -1 || pid_ == -1) return;
+// void HikRobot::reset_usb() const
+// {
+//   if (vid_ == -1 || pid_ == -1) return;
 
-  // https://github.com/ralight/usb-reset/blob/master/usb-reset.c
-  auto handle = libusb_open_device_with_vid_pid(NULL, vid_, pid_);
-  if (!handle) {
-    tools::logger()->warn("Unable to open usb!");
-    return;
-  }
+//   // https://github.com/ralight/usb-reset/blob/master/usb-reset.c
+//   auto handle = libusb_open_device_with_vid_pid(NULL, vid_, pid_);
+//   if (!handle) {
+//     tools::logger()->warn("Unable to open usb!");
+//     return;
+//   }
 
-  if (libusb_reset_device(handle))
-    tools::logger()->warn("Unable to reset usb!");
-  else
-    tools::logger()->info("Reset usb successfully :)");
+//   if (libusb_reset_device(handle))
+//     tools::logger()->warn("Unable to reset usb!");
+//   else
+//     tools::logger()->info("Reset usb successfully :)");
 
-  libusb_close(handle);
-}
+//   libusb_close(handle);
+// }
 
 }  // namespace io
