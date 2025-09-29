@@ -1,11 +1,8 @@
 # Climber_2026 自瞄工作空间
 
 ## 前言
-深度参考同济25开源，基于***工具层:tools***，修改***硬件层：io、功能层：tasks***,重写***应用层：src***\
-链接如下：
-```bash
-https://github.com/TongjiSuperPower/sp_vision_25.git
-```
+分为四层：src、tasks、io、tools
+
 
 ## 1. 编译
 ```bash
@@ -22,4 +19,10 @@ make -C build/ -j`nproc`
 需在yaml文件里改变
 ```yaml
 user_id: your_camera_name
+```
+## 参考
+深度参考同济25开源，基于**工具层:tools**，修改**硬件层：io、功能层：tasks**,重写**应用层：src**\
+链接如下：
+```bash
+https://github.com/TongjiSuperPower/sp_vision_25.git
 ```
