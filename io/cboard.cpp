@@ -99,9 +99,9 @@ namespace io
     }
 
     // 转换 double 到 float 并赋值
-    tx_data.yaw = (float)command.yaw;
-    tx_data.pitch = (float)command.pitch;
-    tx_data.horizon_distance = (float)command.horizon_distance;
+    tx_data.yaw = (float_t)command.yaw;
+    tx_data.pitch = (float_t)command.pitch;
+    tx_data.horizon_distance = (float_t)command.horizon_distance;
 
     // 计算 CRC16
     // tx_data.crc16 = tools::get_crc16(
@@ -113,7 +113,7 @@ namespace io
       // 通过串口发送
       serial_.write(reinterpret_cast<uint8_t *>(&tx_data), sizeof(tx_data));
       tools::logger()->debug("[Cboard] Sent command: control={}, shoot={}, yaw={:.2f}, pitch={:.2f}, horizon_distance={:.2f}",
-                            command.control, command.shoot, command.yaw, command.pitch, command.horizon_distance);
+                            command.control, command.shoot, (float_t)command.yaw, (float_t)command.pitch, (float_t)command.horizon_distance);
     }
     catch (const std::exception &e)
     {
