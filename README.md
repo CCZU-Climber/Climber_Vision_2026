@@ -15,7 +15,7 @@ make -C build/ -j`nproc`
 ```
 
 ## 3. 相机调用
-修改了相机调用逻辑，通过相机名访问设备
+修改了相机调用逻辑，通过相机名访问设备\
 需在yaml文件里改变
 ```yaml
 user_id: your_camera_name
