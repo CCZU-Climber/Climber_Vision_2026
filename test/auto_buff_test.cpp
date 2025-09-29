@@ -7,9 +7,9 @@
 
 #include "tasks/auto_buff/buff_aimer.hpp"
 #include "tasks/auto_buff/buff_detector.hpp"
-// #include "tasks/auto_buff/buff_solver.hpp" 
-// #include "tasks/auto_buff/buff_target.hpp"  
+#include "tasks/auto_buff/buff_target.hpp"  
 #include "tasks/auto_buff/buff_type.hpp"
+#include "tasks/auto_buff/buff_solver.hpp"
 
 #include "tools/exiter.hpp"
 #include "tools/img_tools.hpp"
@@ -17,6 +17,7 @@
 #include "tools/math_tools.hpp"
 #include "tools/plotter.hpp"
 #include "io/camera.hpp"
+#include "io/gimbal/gimbal.hpp"
 
 // 命令行参数定义
 const std::string keys =
@@ -57,7 +58,9 @@ int main(int argc, char * argv[])
 
   //检测器+瞄准器（后续添加）
   auto_buff::Buff_Detector detector(config_path);  // 能量机关实时检测器
+  auto_buff::Solver solver(config_path);           // 坐标解算器
   auto_buff::Aimer aimer(config_path);             // 瞄准器
+  auto_buff::SmallTarget target;                   // 小能量机关目标跟踪器
 
   //实时帧循环处理
   cv::Mat frame;
@@ -68,14 +71,26 @@ int main(int argc, char * argv[])
 
   while (!exiter.exit()) {
     camera.read(frame, frame_timestamp);
+    if (frame.empty()) {
+      tools::logger()->warn("无法读取图像帧，跳过当前循环");
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      continue;
+    }
     frame_count++;
     
     const double frame_timestamp_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
       frame_timestamp - time_base).count();
 
-    const std::optional<auto_buff::PowerRune> power_runes = detector.detect(frame);
+    std::optional<auto_buff::PowerRune> power_runes = detector.detect(frame);
+    
+    // 使用solver计算坐标
+    solver.solve(power_runes);
+    
     nlohmann::json debug_data;
 
+    // 更新目标状态
+    target.get_target(power_runes, frame_timestamp);
+    
     if (power_runes.has_value()) {
       const auto& buff_data = power_runes.value();
 
@@ -94,10 +109,39 @@ int main(int argc, char * argv[])
         }
       }
 
+      // 使用Aimer进行瞄准计算
+      double bullet_speed = 15.0; // 默认子弹速度，可以根据配置文件读取
+      io::Command command = aimer.aim(target, frame_timestamp, bullet_speed);
+      
+      // 显示瞄准和射击指令
+      if (command.control) {
+        cv::putText(frame, "CONTROL: YES", cv::Point(20, 120), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 255, 0), 2);
+      } else {
+        cv::putText(frame, "CONTROL: NO", cv::Point(20, 120), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 255), 2);
+      }
+      
+      if (command.shoot) {
+        cv::putText(frame, "SHOOT: YES", cv::Point(20, 150), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 255, 0), 2);
+      } else {
+        cv::putText(frame, "SHOOT: NO", cv::Point(20, 150), 
+                    cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 255), 2);
+      }
+      
+      // 显示计算出的yaw和pitch角度
+      cv::putText(frame, fmt::format("YAW: {:.2f}", command.yaw * 57.3), cv::Point(20, 180), 
+                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 2);
+      cv::putText(frame, fmt::format("PITCH: {:.2f}", command.pitch * 57.3), cv::Point(20, 210), 
+                  cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(255, 255, 0), 2);
+
       if (frame_count % 10 == 0) {
         tools::logger()->info("第{}帧：检测到能量机关，距离：{:.2f}m，扇叶角度：{:.1f}°",
                               frame_count, buff_data.ypd_in_world[2], 
                               buff_data.ypr_in_world[2] * 57.3);
+        tools::logger()->info("控制权: {} 射击: {} Yaw: {:.2f} Pitch: {:.2f}", 
+                              command.control, command.shoot, command.yaw * 57.3, command.pitch * 57.3);
       }
     } else {
       debug_data["buff"]["status"] = "not_detected";

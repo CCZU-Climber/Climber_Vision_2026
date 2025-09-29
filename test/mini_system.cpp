@@ -19,26 +19,31 @@
 #include "io/camera.hpp"
 
 const std::string keys =
-    "{help h usage ? |                   | 输出命令行参数说明 }"
+    "{help h usage ? |      | 输出命令行参数说明 }"
     "{config-path c  | configs/test.yaml | yaml配置文件的路径}"
-    "{tradition t    |  false                 | 是否使用传统方法识别}";
+    "{tradition t    | false | 是否使用传统方法识别}";
 
 int main(int argc, char *argv[])
 {
     // 读取命令行参数
     cv::CommandLineParser cli(argc, argv, keys);
-    auto config_path = cli.get<std::string>("config-path");
-    auto use_tradition = cli.get<bool>("tradition");
-    if (cli.has("help") || !cli.check())
-    {
+    if (cli.has("help")) {
         cli.printMessage();
         return 0;
+    }
+    
+    auto config_path = cli.get<std::string>("config-path");
+    auto use_tradition = cli.get<bool>("tradition");
+    
+    if (!cli.check()) {
+        cli.printErrors();
+        return -1;
     }
 
     // tools::Plotter plotter;
     tools::Exiter exiter;
 
-    auto_aim::YOLO yolo(config_path, false);
+    auto_aim::YOLO yolo(config_path, false);  // 第二个参数是debug标志，不是文件名
     auto_aim::Detector detector(config_path, false);
     auto_aim::Solver solver(config_path);
     auto_aim::Tracker tracker(config_path, solver);
@@ -50,7 +55,15 @@ int main(int argc, char *argv[])
     std::list<auto_aim::Target> targets;
     std::chrono::steady_clock::time_point t;
 
-    io::CBoard cboard(config_path);
+    // 添加错误处理，避免串口初始化失败导致段错误
+    std::unique_ptr<io::CBoard> cboard_ptr = nullptr;
+    try {
+        cboard_ptr = std::make_unique<io::CBoard>(config_path);
+    } catch (const std::exception& e) {
+        tools::logger()->warn("无法初始化控制板: {}", e.what());
+        tools::logger()->warn("将继续运行，但无法发送控制指令");
+    }
+    
     io::Camera camera(config_path);
     double last_t = -1;
 
@@ -107,9 +120,11 @@ int main(int argc, char *argv[])
         if (key == 'q')
             break;
 
-        auto command = aimer.aim(targets, t, cboard.bullet_speed);
-
-        cboard.send(command);
+        // 只有在控制板成功初始化的情况下才发送指令
+        if (cboard_ptr) {
+            auto command = aimer.aim(targets, t, cboard_ptr->bullet_speed);
+            cboard_ptr->send(command);
+        }
     }
 
     return 0;

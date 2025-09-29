@@ -2,3 +2,5 @@
 /logs
 /CMakeLists.txt
 /patterns
+/io
+/test

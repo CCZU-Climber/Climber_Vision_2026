@@ -1,5 +1,5 @@
-# enemy_color: "red"
-enemy_color: "blue"
+enemy_color: "red"
+# enemy_color: "blue"
 
 #####-----神经网络参数-----#####
 yolo_name: yolov5
@@ -54,8 +54,8 @@ auto_fire: true # 是否由自瞄控制射击
 
 camera_name: "hikrobot"
 exposure_ms: 2
-gamma: 16
-vid_pid: "2bdf:0001"
+gain: 16
+user_id: "" # 添加user_id参数，如果为空则使用默认相机
 
 #  1  0  0
 #  0  1  0

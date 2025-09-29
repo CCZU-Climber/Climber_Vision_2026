@@ -18,29 +18,34 @@
 #include "io/camera.hpp"
 
 const std::string keys =
-    "{help h usage ? |                   | 输出命令行参数说明 }"
+    "{help h usage ? |      | 输出命令行参数说明 }"
     "{config-path c  | configs/test.yaml | yaml配置文件的路径}"
-    "{tradition t    |  false                 | 是否使用传统方法识别}";
+    "{tradition t    | false | 是否使用传统方法识别}";
 
 int main(int argc, char *argv[])
 {
     // 读取命令行参数
     cv::CommandLineParser cli(argc, argv, keys);
-    auto config_path = cli.get<std::string>("config-path");
-    auto use_tradition = cli.get<bool>("tradition");
-    if (cli.has("help") || !cli.check())
-    {
+    if (cli.has("help")) {
         cli.printMessage();
         return 0;
+    }
+    
+    auto config_path = cli.get<std::string>("config-path");
+    auto use_tradition = cli.get<bool>("tradition");
+    
+    if (!cli.check()) {
+        cli.printErrors();
+        return -1;
     }
 
     // tools::Plotter plotter;
     tools::Exiter exiter;
 
-    auto_aim::YOLO yolo(config_path,false);
-    auto_aim::Detector detector(config_path,false);
+    auto_aim::YOLO yolo(config_path, false);
+    auto_aim::Detector detector(config_path, false);
     auto_aim::Solver solver(config_path);
-    auto_aim::Tracker tracker(config_path,solver);
+    auto_aim::Tracker tracker(config_path, solver);
 
     cv::Mat img, drawing;
     std::list<auto_aim::Armor> armors;

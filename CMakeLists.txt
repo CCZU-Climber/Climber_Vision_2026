@@ -34,9 +34,9 @@ add_subdirectory(tasks/auto_buff)
 
 ##################tests##################
 add_executable(auto_aim_test test/auto_aim_test.cpp)
-add_executable(mini_system test/mini_system.cpp)
 add_executable(camera_test test/camera_test.cpp)
 target_link_libraries(auto_aim_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+target_link_libraries(camera_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
 add_executable(auto_buff_test test/auto_buff_test.cpp)
 target_link_libraries(auto_buff_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_buff tools io)
 # # 检查 ROS 环境

@@ -95,21 +95,54 @@ std::optional<PowerRune> Buff_Detector::detect_24(cv::Mat & bgr_img)
   /// 处理未获得的情况
 
   if (results.empty()) {
+    tools::logger()->debug("[Buff_Detector] 未检测到任何目标");
     handle_lose();
     return std::nullopt;
   }
 
   /// results转扇叶FanBlade
 
+  std::vector<FanBlade> fanblades_t;
+  for (auto & result : results) {
+    tools::logger()->debug("[Buff_Detector] 检测到目标，中心点: ({}, {})", result.kpt[4].x, result.kpt[4].y);
+    fanblades_t.emplace_back(FanBlade(result.kpt, result.kpt[4], _light));
+  }
+
+  /// 计算r_center,筛选fanblade
+  auto r_center = get_r_center(fanblades_t, bgr_img);
+  tools::logger()->debug("[Buff_Detector] 计算得到r_center: ({}, {})", r_center.x, r_center.y);
+  
   std::vector<FanBlade> fanblades;
-  for (auto & result : results) fanblades.emplace_back(FanBlade(result.kpt, result.kpt[4], _light));
+  for (auto & fanblade : fanblades_t) {
+    if (cv::norm(fanblade.center - r_center) < 500 || results.size() == 1) {
+      fanblades.emplace_back(fanblade);
+    }
+  }
+  if (fanblades.empty()) {
+    tools::logger()->debug("[Buff_Detector] 未找到有效扇叶");
+    handle_lose();
+    return std::nullopt;
+  }
 
-  /// 生成PowerRune
-  auto r_center = get_r_center(fanblades, bgr_img);
   PowerRune powerrune(fanblades, r_center, last_powerrune_);
+  
+  // 检查坐标计算结果
+  tools::logger()->debug("[Buff_Detector] 坐标计算结果:");
+  tools::logger()->debug("  xyz_in_world: ({}, {}, {})", 
+                         powerrune.xyz_in_world[0], 
+                         powerrune.xyz_in_world[1], 
+                         powerrune.xyz_in_world[2]);
+  tools::logger()->debug("  ypd_in_world: ({}, {}, {})", 
+                         powerrune.ypd_in_world[0], 
+                         powerrune.ypd_in_world[1], 
+                         powerrune.ypd_in_world[2]);
+  tools::logger()->debug("  ypr_in_world: ({}, {}, {})", 
+                         powerrune.ypr_in_world[0], 
+                         powerrune.ypr_in_world[1], 
+                         powerrune.ypr_in_world[2]);
 
-  /// handle error
   if (powerrune.is_unsolve()) {
+    tools::logger()->debug("[Buff_Detector] PowerRune标记为不可解");
     handle_lose();
     return std::nullopt;
   }
