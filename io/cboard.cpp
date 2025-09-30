@@ -222,6 +222,10 @@ namespace io
       auto y = rx_data_.q[2];
       auto z = rx_data_.q[3];
       auto w = rx_data_.q[0];
+      // auto x = rx_data_.q[0];
+      // auto y = rx_data_.q[1];
+      // auto z = rx_data_.q[2];
+      // auto w = rx_data_.q[3];
 
       // 四元数有效性检查
       if (std::abs(x * x + y * y + z * z + w * w - 1) > 1e-2)
@@ -230,7 +234,7 @@ namespace io
       }
       else
       {
-        queue_.push({{w, x, y, z}, t});
+        queue_.push({{ w, x, y, z}, t});
       }
 
       // 更新状态变量 (对应原 bullet_speed_canid_ 接收逻辑)

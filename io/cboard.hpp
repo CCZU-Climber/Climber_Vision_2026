@@ -28,16 +28,7 @@ enum Mode
 };
 const std::vector<std::string> MODES = {"idle", "auto_aim", "small_buff", "big_buff", "outpost"};
 
-// // 哨兵专有
-// enum ShootMode
-// {
-//   left_shoot,
-//   right_shoot,
-//   both_shoot
-// };
-// const std::vector<std::string> SHOOT_MODES = {"left_shoot", "right_shoot", "both_shoot"};
 
-// --- New Serial Packet Definitions ---
 
 // 接收：下位机 -> Vision (IMU, Speed, Mode)
 struct __attribute__((packed)) BoardToVision
