@@ -2,7 +2,7 @@
 
 #include <chrono>
 #include <fstream>
-#include <nlohmann/json.hpp>
+// #include <nlohmann/json.hpp>
 #include <opencv2/opencv.hpp>
 
 #include "tasks/auto_aim/aimer.hpp"
@@ -14,7 +14,7 @@
 #include "tools/img_tools.hpp"
 #include "tools/logger.hpp"
 #include "tools/math_tools.hpp"
-#include "tools/plotter.hpp"
+// #include "tools/plotter.hpp"
 #include "io/camera.hpp"
 
 const std::string keys =

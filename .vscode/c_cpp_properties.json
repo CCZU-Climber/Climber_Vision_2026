@@ -11,8 +11,8 @@
                 "${workspaceFolder}/tools/**",
                 "/usr/include/opencv4",
                 "/usr/include/eigen3",
-                "/opt/intel/openvino_2024.6.0/runtime/include/",
-                "/opt/ros/humble/include/**"
+                "/opt/intel/openvino_2025.3.0/runtime/include/",
+                "/opt/ros/jazzy/include/**"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c17",
