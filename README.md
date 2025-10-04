@@ -6,8 +6,8 @@
 主要作为上场保底代码和26赛季的学习平台  
 
 ## 1. 安装依赖
-OPENVIO: <https://docs.openvino.ai/2025/get-started/install-openvino/install-openvino-archive-linux.html>
-Cere: <http://ceres-solver.org/installation.html>
+OPENVIO: <https://docs.openvino.ai/2025/get-started/install-openvino/install-openvino-archive-linux.html>   \
+Cere: <http://ceres-solver.org/installation.html>   \
 **24.04中cere要把第三方库也clone全**
 ```bash
 git clone --recurse-submodules https://ceres-solver.googlesource.com/ceres-solver
