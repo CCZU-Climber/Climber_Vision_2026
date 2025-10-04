@@ -12,8 +12,8 @@
 
 const std::string keys =
     "{help h usage ? |      | 输出命令行参数说明}"
-    "{r | configs/test.yaml | 右相机配置文件路径 (短名-r) }"  // 移除 @
-    "{l | configs/test.yaml | 左相机配置文件路径 (短名-l) }"; // 移除 @
+    "{r | configs/camera_r.yaml | 右相机配置文件路径 (短名-r) }"  // 移除 @
+    "{l | configs/camera_l.yaml | 左相机配置文件路径 (短名-l) }"; // 移除 @
 
 int main(int argc, char * argv[])
 {
