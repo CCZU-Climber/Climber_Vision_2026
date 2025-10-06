@@ -52,7 +52,7 @@ target_link_libraries(auto_aim_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim to
 target_link_libraries(auto_aim_double ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
 target_link_libraries(mini_system ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
 target_link_libraries(camera_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
-target_link_libraries(camera_test_double ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
+target_link_libraries(camera_test_double ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
 # # 检查 ROS 环境
 # find_package(ament_cmake QUIET)
 # find_package(rclcpp QUIET)
