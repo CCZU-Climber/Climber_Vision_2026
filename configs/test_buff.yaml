@@ -7,8 +7,8 @@ classify_model: assets/tiny_resnet.onnx
 yolo11_model_path: assets/yolo11.xml
 yolov8_model_path: assets/yolov8.xml
 yolov5_model_path: assets/yolov5.xml
-device: NPU
-min_confidence: 0.7 #0.8 #原检测阈值
+device: GPU
+min_confidence: 0.8
 use_traditional: true
 
 #####-----ROI-----#####
@@ -30,12 +30,12 @@ min_armor_ratio: 1
 max_armor_ratio: 5
 max_side_ratio: 1.5
 max_rectangular_error: 25 # degree
-# min_confidence: 0.8
+# min_confidence: 0.6
 
 #####-----tracker参数-----#####
-min_detect_count: 5               #追踪检测次数阈值
-max_temp_lost_count: 15           #装甲板最大丢失帧数
-outpost_max_temp_lost_count: 75   #前哨站最大丢失帧数
+min_detect_count: 5
+max_temp_lost_count: 15
+outpost_max_temp_lost_count: 75
 
 #####-----aimer参数-----#####
 yaw_offset: 0 # degree -2.5
@@ -54,9 +54,8 @@ auto_fire: true # 是否由自瞄控制射击
 
 camera_name: "hikrobot"
 exposure_ms: 2
-gamma: 12
-# vid_pid: "2bdf:0001"
-user_id: I
+gain: 16
+user_id: "" # 添加user_id参数，如果为空则使用默认相机
 
 #  1  0  0
 #  0  1  0
@@ -76,29 +75,29 @@ R_camera2gimbal: [0.0674975841080835, 0.9660242443012298, 0.24948193433956323, 0
 t_camera2gimbal: [-0.07226910776254919, 0.036112438547954297, -0.028686859605232057]
 
 
-# #####-----cboard参数-----#####
-# quaternion_canid: 0x100
-# bullet_speed_canid: 0x101
-# send_canid: 0xff
-# can_interface: "can0"
+#####-----cboard参数-----#####
+quaternion_canid: 0x100
+bullet_speed_canid: 0x101
+send_canid: 0xff
+can_interface: "can0"
 
 #####-----gimbal参数-----#####
-com_port: "/dev/ttyRVright"
+com_port: "/dev/ttyRVleft"
 
-# #####-----planner-----#####
-# fire_thresh: 0.003
+#####-----planner-----#####
+fire_thresh: 0.003
 
-# max_yaw_acc: 50
-# Q_yaw: [9e6, 0]
-# R_yaw: [1]
+max_yaw_acc: 50
+Q_yaw: [9e6, 0]
+R_yaw: [1]
 
-# max_pitch_acc: 100
-# Q_pitch: [9e6,0]
-# R_pitch: [1]
+max_pitch_acc: 100
+Q_pitch: [9e6,0]
+R_pitch: [1]
 
-# #####-----buff_detector参数-----#####
-# model: "assets/yolo11_buff_int8.xml"
+#####-----buff_detector参数-----#####
+model: "assets/yolo11_buff_int8.xml"
 
-# #####-----buff_aimer参数-----#####
-# fire_gap_time: 0.520   # s
-# predict_time: 0.100     # s
+#####-----buff_aimer参数-----#####
+fire_gap_time: 0.520   # s
+predict_time: 0.100     # s

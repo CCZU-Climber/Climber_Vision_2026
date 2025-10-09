@@ -23,7 +23,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 add_subdirectory(tools)
 add_subdirectory(io)
 add_subdirectory(tasks/auto_aim)
-# add_subdirectory(tasks/auto_buff)
+add_subdirectory(tasks/auto_buff)
 # add_subdirectory(tasks/omniperception)
 
 ####################src###################
@@ -53,6 +53,8 @@ target_link_libraries(auto_aim_double ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim 
 target_link_libraries(mini_system ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
 target_link_libraries(camera_test ${OpenCV_LIBS} fmt::fmt yaml-cpp tools io)
 target_link_libraries(camera_test_double ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_aim tools io)
+add_executable(auto_buff_test test/auto_buff_test.cpp)
+target_link_libraries(auto_buff_test ${OpenCV_LIBS} fmt::fmt yaml-cpp auto_buff tools io)
 # # 检查 ROS 环境
 # find_package(ament_cmake QUIET)
 # find_package(rclcpp QUIET)

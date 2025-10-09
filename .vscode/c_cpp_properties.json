@@ -8,6 +8,7 @@
                 "${workspaceFolder}/io/hikrobot/include",
                 "${workspaceFolder}/io/**",
                 "${workspaceFolder}/tasks/auto_aim/**",
+                "${workspaceFolder}/tasks/auto_buff/**",
                 "${workspaceFolder}/tools/**",
                 "/usr/include/opencv4",
                 "/usr/include/eigen3",
